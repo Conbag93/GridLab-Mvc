@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\GridLab.Grid\GridLab.Grid.csproj" />
+    <ProjectReference Include="..\GridLab.Shared\GridLab.Shared.csproj" />
+  </ItemGroup>
+</Project>

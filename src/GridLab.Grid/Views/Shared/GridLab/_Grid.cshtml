@@ -1,0 +1,106 @@
+@model GridViewModel
+@{
+    var spec = Model.Spec;
+    var q = Model.Query;
+    var editing = Model.Editing;
+    var inline = spec.EditMode == GridEditMode.Inline;
+    var formId = spec.Id + "-edit";
+
+    string SortHref(GridColumnSpec c) =>
+        Url.Action(spec.IndexAction, q.ToRouteValues(sort: c.Name, desc: q.Sort == c.Name && !q.Desc, page: 1, keepWin: false))!;
+    string SortMark(GridColumnSpec c) => !string.Equals(q.Sort, c.Name, StringComparison.OrdinalIgnoreCase) ? "" : q.Desc ? "▼" : "▲";
+    string? CellClass(GridColumnSpec c) => string.Join(" ", new[] {
+        c.Align switch { GridAlign.Right => "gl-right", GridAlign.Center => "gl-center", GridAlign.Left => "gl-left", _ => c.IsNumeric ? "gl-right" : c.Type == GridColumnType.Boolean ? "gl-center" : "" },
+        c.CssClass ?? "" }.Where(s => s.Length > 0)) is { Length: > 0 } cls ? cls : null;
+}
+
+<div class="gl @spec.CssClass" id="@spec.Id">
+    <div class="gl-toolbar">
+        <h1 class="gl-title">@spec.Title</h1>
+        <div class="gl-toolbar-right">
+            @if (spec.ShowSearch)
+            {
+                <form method="get" action="@Url.Action(spec.IndexAction)" class="gl-search" role="search">
+                    @foreach (var (k, v) in q.ToRouteValues(page: 1, keepSearch: false, keepWin: false))
+                    {
+                        <input type="hidden" name="@k" value="@v" />
+                    }
+                    <input type="search" name="search" value="@q.Search" placeholder="@spec.SearchPlaceholder" aria-label="Search" class="gl-input" />
+                    <button type="submit" class="gl-btn" aria-label="Search">
+                        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 10l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </button>
+                    @if (!string.IsNullOrWhiteSpace(q.Search))
+                    {
+                        <a class="gl-btn gl-btn--quiet" href="@Url.Action(spec.IndexAction, q.ToRouteValues(page: 1, keepSearch: false, keepWin: false))">Clear</a>
+                    }
+                </form>
+            }
+            @if (spec.AllowAdd && editing is null)
+            {
+                <a class="gl-btn gl-btn--primary" href="@Url.Action(spec.IndexAction, q.ToRouteValues(add: true))">+ @spec.AddText</a>
+            }
+        </div>
+    </div>
+
+    @if (editing is not null)
+    {
+        if (inline)
+        {
+            @* Inputs in the edit row point at this form via the form="" attribute, so no <form> nests in a <tr>. *@
+            <form id="@formId" method="post" action="@Url.Action(spec.SaveAction, q.ToRouteValues())">@Html.AntiForgeryToken()</form>
+        }
+        else
+        {
+            <partial name="GridLab/_GridEditForm" model="Model" />
+        }
+    }
+
+    <div class="gl-scroll">
+        <table class="gl-table">
+            <thead>
+                <tr>
+                    @foreach (var c in spec.VisibleColumns)
+                    {
+                        <th class="@CellClass(c) @(SortMark(c) != "" ? "gl-sorted" : "")" style="@(c.Width is null ? null : $"width:{c.Width}")">
+                            @if (c.Sortable)
+                            {
+                                <a href="@SortHref(c)" class="gl-sort">@c.Title <span class="gl-sort-mark" aria-hidden="true">@SortMark(c)</span></a>
+                            }
+                            else
+                            {
+                                @c.Title
+                            }
+                        </th>
+                    }
+                    @if (spec.AllowEdit || spec.AllowDelete)
+                    {
+                        <th class="gl-actions"></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (inline && Model.IsNew)
+                {
+                    <partial name="GridLab/_GridEditRow" model="new GridRowContext(Model, editing!)" />
+                }
+                @foreach (var row in Model.Rows)
+                {
+                    if (inline && Model.EditingKey is not null && Model.EditingKey == spec.KeyString(row))
+                    {
+                        <partial name="GridLab/_GridEditRow" model="new GridRowContext(Model, editing!)" />
+                    }
+                    else
+                    {
+                        <partial name="GridLab/_GridRow" model="new GridRowContext(Model, row)" />
+                    }
+                }
+                @if (Model.Rows.Count == 0 && !Model.IsNew)
+                {
+                    <tr><td class="gl-empty" colspan="@(spec.VisibleColumns.Count() + 1)">@spec.EmptyText</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <partial name="GridLab/_GridPager" model="Model" />
+</div>

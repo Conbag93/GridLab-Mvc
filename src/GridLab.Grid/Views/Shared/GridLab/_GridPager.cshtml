@@ -1,0 +1,46 @@
+@model GridViewModel
+@{
+    var spec = Model.Spec;
+    var q = Model.Query;
+    var pager = Model.Pager;
+    string PageHref(int pageIndex) => Url.Action(spec.IndexAction, q.ToRouteValues(page: pageIndex + 1, win: pager.WindowStart, keepWin: false))!;
+    string SizeHref(int size) => Url.Action(spec.IndexAction, q.ToRouteValues(page: 1, pageSize: size, keepWin: false))!;
+}
+@if (pager.Visible || pager.TotalCount > pager.AllowedPageSizes.Min())
+{
+    <nav class="gl-pager" aria-label="Page navigation">
+        <div class="gl-page-sizes">
+            @foreach (var size in pager.AllowedPageSizes)
+            {
+                if (size == pager.PageSize)
+                {
+                    <span class="gl-page-size gl-selection" aria-current="true" aria-label="Items per page: @size">@size</span>
+                }
+                else
+                {
+                    <a class="gl-page-size" href="@SizeHref(size)" aria-label="Items per page: @size">@size</a>
+                }
+            }
+        </div>
+        <div class="gl-pages">
+            <span class="gl-info">@pager.InfoText</span>
+            <span class="gl-page-indexes">
+                @foreach (var item in pager.Items)
+                {
+                    if (item.Kind == PagerItemKind.Separator)
+                    {
+                        <span class="gl-separator">. . .</span>
+                    }
+                    else if (item.Selected)
+                    {
+                        <span class="gl-page gl-selection" aria-current="page">@(item.PageIndex + 1)</span>
+                    }
+                    else
+                    {
+                        <a class="gl-page" href="@PageHref(item.PageIndex)" aria-label="Page @(item.PageIndex + 1)">@(item.PageIndex + 1)</a>
+                    }
+                }
+            </span>
+        </div>
+    </nav>
+}

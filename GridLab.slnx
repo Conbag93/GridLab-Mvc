@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GridLab.Grid/GridLab.Grid.csproj" />
+    <Project Path="src/GridLab.HandRolled/GridLab.HandRolled.csproj" />
+    <Project Path="src/GridLab.Shared/GridLab.Shared.csproj" />
+  </Folder>
+</Solution>

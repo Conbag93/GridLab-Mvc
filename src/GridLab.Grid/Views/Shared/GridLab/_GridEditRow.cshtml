@@ -1,0 +1,23 @@
+@model GridRowContext
+@{
+    var spec = Model.Grid.Spec;
+    var q = Model.Grid.Query;
+    var row = Model.Row;
+    var formId = spec.Id + "-edit";
+}
+<tr class="gl-editing">
+    @foreach (var c in spec.VisibleColumns)
+    {
+        <td class="@(c.IsNumeric ? "gl-right" : null)">
+            @if (c == spec.VisibleColumns.First())
+            {
+                <input type="hidden" name="@(GridViewModel.Prefix).@spec.Key.Name" value="@spec.KeyString(row)" form="@formId" />
+            }
+            <partial name="GridLab/_GridEditor" model="new GridEditorContext(Model.Grid, c, row, formId)" />
+        </td>
+    }
+    <td class="gl-actions">
+        <button type="submit" class="gl-btn gl-btn--primary" form="@formId">Save</button>
+        <a class="gl-btn" href="@Url.Action(spec.IndexAction, q.ToRouteValues())">Cancel</a>
+    </td>
+</tr>

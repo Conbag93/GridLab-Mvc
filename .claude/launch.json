@@ -1,0 +1,6 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "handrolled", "runtimeExecutable": "dotnet", "runtimeArgs": ["run", "--project", "src/GridLab.HandRolled", "--no-launch-profile", "--urls", "http://localhost:5100"], "port": 5100 }
+  ]
+}

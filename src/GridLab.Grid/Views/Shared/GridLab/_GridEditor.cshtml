@@ -1,0 +1,60 @@
+@model GridEditorContext
+@{
+    var c = Model.Column;
+    var row = Model.Row;
+    var name = $"{GridViewModel.Prefix}.{c.Name}";
+    var id = $"{Model.Grid.Spec.Id}-{c.Name}";
+    var form = Model.FormId;
+    var errors = ViewContext.ModelState.TryGetValue(name, out var entry) ? entry.Errors.Select(e => e.ErrorMessage).ToList() : [];
+    var invalid = errors.Count > 0 ? "gl-invalid" : "";
+    var value = c.InputValue(row);
+}
+@if (!c.Editable)
+{
+    <span class="gl-readonly">@c.DisplayText(row)</span>
+}
+else if (c.EditorTemplate is not null)
+{
+    @c.EditorTemplate(row)
+}
+else
+{
+    switch (c.Type)
+    {
+        case GridColumnType.Boolean:
+            <input type="checkbox" id="@id" name="@name" value="true" form="@form" class="gl-check @invalid" @(c.Get(row) is true ? "checked" : "") />
+            <input type="hidden" name="@name" value="false" form="@form" />
+            break;
+        case GridColumnType.Select:
+            <select id="@id" name="@name" form="@form" class="gl-select @invalid">
+                @if (c.IsNullable || c.PropertyType == typeof(string) || c.IsNumeric)
+                {
+                    <option value="@(c.IsNumeric && !c.IsNullable ? "0" : "")">@(c.Placeholder ?? "— choose —")</option>
+                }
+                @foreach (var o in c.Options ?? [])
+                {
+                    <option value="@o.Value" selected="@(o.Value == value)">@o.Text</option>
+                }
+            </select>
+            break;
+        case GridColumnType.Number:
+            <input type="number" id="@id" name="@name" value="@value" form="@form" class="gl-input @invalid"
+                   step="@(c.PropertyType == typeof(int) || c.PropertyType == typeof(long) || c.PropertyType == typeof(short) || c.PropertyType == typeof(byte) ? "1" : "any")"
+                   placeholder="@c.Placeholder" />
+            break;
+        case GridColumnType.Date:
+            <input type="date" id="@id" name="@name" value="@value" form="@form" class="gl-input @invalid" />
+            break;
+        case GridColumnType.DateTime:
+            <input type="datetime-local" id="@id" name="@name" value="@value" form="@form" class="gl-input @invalid" />
+            break;
+        default:
+            <input type="text" id="@id" name="@name" value="@value" form="@form" class="gl-input @invalid" placeholder="@c.Placeholder"
+                   autofocus="@(c == Model.Grid.Spec.VisibleColumns.First(v => v.Editable))" />
+            break;
+    }
+}
+@foreach (var e in errors)
+{
+    <span class="gl-error">@e</span>
+}

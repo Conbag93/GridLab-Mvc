@@ -1,0 +1,53 @@
+@model GridRowContext
+@{
+    var spec = Model.Grid.Spec;
+    var q = Model.Grid.Query;
+    var row = Model.Row;
+    var key = spec.KeyString(row);
+    string? CellClass(GridColumnSpec c) => string.Join(" ", new[] {
+        c.Align switch { GridAlign.Right => "gl-right", GridAlign.Center => "gl-center", GridAlign.Left => "gl-left", _ => c.IsNumeric ? "gl-right" : c.Type == GridColumnType.Boolean ? "gl-center" : "" },
+        c.CssClass ?? "" }.Where(s => s.Length > 0)) is { Length: > 0 } cls ? cls : null;
+}
+<tr class="@spec.RowClass?.Invoke(row)">
+    @foreach (var c in spec.VisibleColumns)
+    {
+        <td class="@CellClass(c)">
+            @if (c.Template is not null)
+            {
+                @c.Template(row)
+            }
+            else if (c.Type == GridColumnType.Boolean)
+            {
+                var on = c.Get(row) is true;
+                <span class="gl-bool @(on ? "gl-bool--on" : "")" role="img" aria-label="@(on ? "Yes" : "No")">
+                    @if (on) { <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> }
+                </span>
+            }
+            else
+            {
+                @c.DisplayText(row)
+            }
+        </td>
+    }
+    @if (spec.AllowEdit || spec.AllowDelete)
+    {
+        <td class="gl-actions">
+            @if (spec.AllowEdit && Model.Grid.Editing is null)
+            {
+                <a class="gl-btn gl-btn--icon" href="@Url.Action(spec.IndexAction, q.ToRouteValues(edit: key))" title="Edit" aria-label="Edit">
+                    @if (spec.UseIcons) { <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M11.5 2.5l2 2L5 13H3v-2z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> } else { <text>Edit</text> }
+                </a>
+            }
+            @if (spec.AllowDelete && Model.Grid.Editing is null)
+            {
+                <form method="post" action="@Url.Action(spec.DeleteAction, q.ToRouteValues(id: key))" class="gl-inline-form"
+                      onsubmit="@(spec.ConfirmDelete ? "return confirm('Delete this row?')" : null)">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="gl-btn gl-btn--icon gl-btn--danger" title="Delete" aria-label="Delete">
+                        @if (spec.UseIcons) { <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M3 4h10M6 4V2.5h4V4M4.5 4l.6 9h5.8l.6-9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> } else { <text>Delete</text> }
+                    </button>
+                </form>
+            }
+        </td>
+    }
+</tr>

@@ -1,0 +1,30 @@
+@model GridViewModel
+@{
+    var spec = Model.Spec;
+    var q = Model.Query;
+    var row = Model.Editing!;
+    var modal = spec.EditMode == GridEditMode.Modal;
+    var heading = Model.IsNew ? $"New {spec.Title.TrimEnd('s').ToLowerInvariant()}" : $"Edit {spec.Title.TrimEnd('s').ToLowerInvariant()}";
+}
+@if (modal) { @:<div class="gl-modal-backdrop"></div>
+}
+<section class="gl-form @(modal ? "gl-form--modal" : "gl-form--panel")" role="@(modal ? "dialog" : null)" aria-modal="@(modal ? "true" : null)" aria-labelledby="@spec.Id-form-title">
+    <form method="post" action="@Url.Action(spec.SaveAction, q.ToRouteValues())">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="@(GridViewModel.Prefix).@spec.Key.Name" value="@spec.KeyString(row)" />
+        <h2 class="gl-form-title" id="@spec.Id-form-title">@heading</h2>
+        <div class="gl-fields">
+            @foreach (var c in spec.Columns.Where(c => c.Visible && c != spec.Key))
+            {
+                <label class="gl-field">
+                    <span class="gl-label">@c.Title</span>
+                    <partial name="GridLab/_GridEditor" model="new GridEditorContext(Model, c, row, null)" />
+                </label>
+            }
+        </div>
+        <div class="gl-form-actions">
+            <button type="submit" class="gl-btn gl-btn--primary">Save</button>
+            <a class="gl-btn" href="@Url.Action(spec.IndexAction, q.ToRouteValues())">Cancel</a>
+        </div>
+    </form>
+</section>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · GridLab (hand-rolled)</title>
+    <link rel="stylesheet" href="~/_content/GridLab.Grid/gridlab.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <nav class="topnav">
+        <a asp-controller="Products" asp-action="Index">Products</a>
+        <a asp-controller="Users" asp-action="Index">Users</a>
+        <a asp-controller="Addresses" asp-action="Index">Addresses</a>
+    </nav>
+    <main class="container">
+        @RenderBody()
+    </main>
+</body>
+</html>
